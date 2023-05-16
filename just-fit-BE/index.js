@@ -8,6 +8,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const {Activity} = require("./models/Activitity");
+const { Goal } = require("./models/Goal");
 
 app.use(function (req, res, next) {
 
@@ -51,6 +52,33 @@ app.post('/api/activity', async (req, res) => {
 app.get("/api/activity", async (req, res) => {
     const data = await Activity.find();
     return res.status(200).json({
+        data
+    });
+});
+
+app.post('/api/goal', async (req, res) => {
+    const { activityType, deadline, energyBurn, duration, distance, status} = req.body;
+    try {
+        const newGoal = new Goal({
+            activityType: activityType,
+            deadline: deadline,
+            energyBurn: energyBurn,
+            duration: duration,
+            distance: distance,
+            status: status
+        });
+        const savedGoal = await newGoal.save();
+        console.log('savedGoal: ', savedGoal)
+        return res.status(201).json(savedGoal);
+    } catch (error) {
+        return res.status(404).json({ message: error.message });
+    }
+});
+
+
+app.get("/api/goal", async (req, res) => {
+    const data = await Goal.find(); 
+        return res.status(200).json({
         data
     });
 });
