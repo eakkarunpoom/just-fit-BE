@@ -24,6 +24,14 @@ const GoalSchema = new mongoose.Schema({
     status : {
         type: String,
         required: false
+    },    
+    userId : {
+        type: String,
+        required: true
+    },
+    userEmail : {
+        type: String,
+        required: true
     }
 })
 
