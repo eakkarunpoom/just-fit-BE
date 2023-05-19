@@ -25,6 +25,7 @@ app.use((req, res, next) => {
     next();
 })
 
+// Verication Token.
 const appCheckVerification = async (req, res, next) => {
     const appAccessToken = req.header('x-access-token');
     if (!appAccessToken) {
@@ -49,12 +50,10 @@ const appCheckVerification = async (req, res, next) => {
     }
 }
 
+// POST (Create) - Create a new activity.
 app.post('/api/activity', [appCheckVerification], async (req, res) => {
     const userId = req.header['x-user-id']; 
-    const userEmail = req.header['x-user-email'];
-
     console.log('userId', userId);
-    console.log('userEmail', userEmail)
     
     const { activityType, title, dateTime, duration, energyBurn, distance,description } = req.body;
     try {
@@ -76,7 +75,7 @@ app.post('/api/activity', [appCheckVerification], async (req, res) => {
     }
 });
 
-// GET - All activity
+// GET - Get all activity by id
 app.get("/api/activity", [appCheckVerification], async (req, res) => {
     const userId = req.header['x-user-id']; 
     console.log('userId', userId);
@@ -130,7 +129,6 @@ app.delete('/api/activity/:id',[appCheckVerification], async (req, res) => {
     const activityId = req.params.id;
 
     console.log('userId', userId);
-    console.log('userEmail', userEmail)
     
     const { activityType, title, dateTime, duration, energyBurn, distance,description } = req.body;
     try {
@@ -160,7 +158,7 @@ app.delete('/api/activity/:id',[appCheckVerification], async (req, res) => {
     }
 })
 
-// POST - 
+// POST (Create) - Create a new goal.
 app.post('/api/goal',[appCheckVerification], async (req, res) => {
     const userId = req.header['x-user-id']; 
     console.log('userId', userId);
@@ -186,6 +184,7 @@ app.post('/api/goal',[appCheckVerification], async (req, res) => {
 });
 
 
+// GET - get all goal
 app.get("/api/goal",[appCheckVerification], async (req, res) => {
     const userId = req.header['x-user-id']; 
     console.log('userId', userId);
@@ -198,6 +197,8 @@ app.get("/api/goal",[appCheckVerification], async (req, res) => {
     });
 });
 
+
+// Express and MongoDB Connection.
 const start = async () => {
     try {
         const { DB_HOST, DB_USERNAME, DB_PASSWORD } = process.env
