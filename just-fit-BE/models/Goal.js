@@ -29,12 +29,7 @@ const GoalSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    userEmail : {
-        type: String,
-        required: true
-    }
 })
 
 const Goal = mongoose.model('Create_Goal', GoalSchema);
-
 module.exports = { Goal }
