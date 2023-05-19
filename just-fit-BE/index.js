@@ -90,6 +90,78 @@ app.get("/api/activity", [appCheckVerification], async (req, res) => {
     });
 });
 
+app.put("/api/activity/:id", [appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const userEmail = req.header['x-user-email'];
+    const activityId = req.params.id;
+
+    console.log('userId', userId);
+    console.log('userEmail', userEmail)
+    
+    const { activityType, title, dateTime, duration, energyBurn, distance,description } = req.body;
+    try {
+        const updatedActivity = await Activity.findOneAndUpdate(
+            { _id: activityId, userId: userId },
+            {
+                activityType: activityType,
+                title: title,
+                dateTime: dateTime,
+                duration: duration,
+                energyBurn: energyBurn,
+                distance: distance,
+                description: description,
+                userEmail: userEmail
+            },
+            { new: true }
+        );
+
+        if (!updatedActivity) {
+            return res.status(404).json({ message: 'Activity not found' });
+        }
+
+        console.log('updatedActivity: ', updatedActivity);
+        return res.status(200).json(updatedActivity);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+app.delete('/api/activity/:id',[appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const userEmail = req.header['x-user-email'];
+    const activityId = req.params.id;
+
+    console.log('userId', userId);
+    console.log('userEmail', userEmail)
+    
+    const { activityType, title, dateTime, duration, energyBurn, distance,description } = req.body;
+    try {
+        const deleteActivity = await Activity.findOneAndDelete(
+            { _id: activityId, userId: userId },
+            {
+                activityType: activityType,
+                title: title,
+                dateTime: dateTime,
+                duration: duration,
+                energyBurn: energyBurn,
+                distance: distance,
+                description: description,
+                userEmail: userEmail
+            },
+            { new: true }
+        );
+
+        if (!deleteActivity) {
+            return res.status(404).json({ message: 'Activity not found' });
+        }
+
+        console.log('deleteActivity: ', deleteActivity);
+        return res.status(200).json(deleteActivity);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+})
+
 app.post('/api/goal',[appCheckVerification], async (req, res) => {
     const userId = req.header['x-user-id']; 
     const userEmail = req.header['x-user-email'];
