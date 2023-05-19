@@ -1,34 +1,30 @@
 const mongoose = require('mongoose');
 
-const ActivitySchema = new mongoose.Schema({
+const GoalSchema = new mongoose.Schema({
     activityType : {
         type: String,
         required: true
     },
-    title : {
-        type: String,
-        required: true
-    },
-    dateTime : {
+    deadline : {
         type: Date,
-        required: true
-    },
-    duration : {
-        type: Number,
         required: true
     },
     energyBurn : {
         type: Number,
         required: false
     },
+    duration : {
+        type: Number,
+        required: true
+    },
     distance : {
         type: Number,
         required: false
     },
-    description : {
+    status : {
         type: String,
         required: false
-    },
+    },    
     userId : {
         type: String,
         required: true
@@ -37,9 +33,8 @@ const ActivitySchema = new mongoose.Schema({
         type: String,
         required: true
     }
-});
+})
 
+const Goal = mongoose.model('Create_Goal', GoalSchema);
 
-const Activity = mongoose.model('Create_Activity', ActivitySchema);
-
-module.exports = { Activity }
+module.exports = { Goal }

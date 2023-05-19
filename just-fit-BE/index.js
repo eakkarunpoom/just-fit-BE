@@ -1,34 +1,59 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const firebaseAdmin = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 require('dotenv').config();
-
+const firebaseSecretConfig = require('./firebase-secret-config.json');
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const {Activity} = require("./models/Activitity");
+const { Goal } = require("./models/Goal");
 
-app.use(function (req, res, next) {
+firebaseAdmin.initializeApp({
+    credential: firebaseAdmin.cert(firebaseSecretConfig)
+})
 
-    // Website you wish to allow to connect
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
-    // Request methods you wish to allow
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-    // Request headers you wish to allow
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-
-    // Set to true if you need the website to include cookies in the requests sent
-    // to the API (e.g. in case you use sessions)
-    res.setHeader('Access-Control-Allow-Credentials', true);
-
-    // Pass to next layer of middleware
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT");
+    res.setHeader("Access-Control-Allow-Headers", "*");
     next();
-});
+})
 
-app.post('/api/activity', async (req, res) => {
+const appCheckVerification = async (req, res, next) => {
+    const appAccessToken = req.header('x-access-token');
+    if (!appAccessToken) {
+        res.status(401);
+        return next('Unauthorized');
+    }
+    try {
+        const decoded = await getAuth()
+            .verifyIdToken(appAccessToken)
+            .then((decodedToken) => {
+                console.log('decodedToken', decodedToken)
+                return decodedToken;
+            });
+        console.log('decoded', decoded)
+        req.header['x-user-id'] = decoded.user_id
+        req.header['x-user-email'] = decoded.email
+        return next();
+    } catch (err) {
+        console.log('err', err)
+        res.status(401);
+        return next('Unauthorized..');
+    }
+}
+
+app.post('/api/activity', [appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const userEmail = req.header['x-user-email'];
+
+    console.log('userId', userId);
+    console.log('userEmail', userEmail)
+    
     const { activityType, title, dateTime, duration, energyBurn, distance,description } = req.body;
     try {
         const newActivity = new Activity({
@@ -38,7 +63,9 @@ app.post('/api/activity', async (req, res) => {
             duration: duration,
             energyBurn: energyBurn,
             distance: distance,
-            description: description
+            description: description,
+            userId:userId,
+            userEmail:userEmail
         });
         const savedActivity = await newActivity.save();
         console.log('savedActivity: ', savedActivity)
@@ -48,9 +75,62 @@ app.post('/api/activity', async (req, res) => {
     }
 });
 
-app.get("/api/activity", async (req, res) => {
-    const data = await Activity.find();
+app.get("/api/activity", [appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const userEmail = req.header['x-user-email'];
+
+    console.log('userId', userId);
+    console.log('userEmail', userEmail)
+    
+    const data = await Activity.find({
+        userId
+    });
     return res.status(200).json({
+        data
+    });
+});
+
+app.post('/api/goal',[appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const userEmail = req.header['x-user-email'];
+
+    console.log('userId', userId);
+    console.log('userEmail', userEmail)
+    
+    const { activityType, deadline, energyBurn, duration, distance, status } = req.body;
+    try {
+        const newGoal = new Goal({
+            userId : userId,
+            userEmail : userEmail,
+            activityType: activityType,
+            deadline: deadline,
+            energyBurn: energyBurn,
+            duration: duration,
+            distance: distance,
+            status: status,
+            userId: userId,
+            userEmail: userEmail
+        });
+        const savedGoal = await newGoal.save();
+        console.log('savedGoal: ', savedGoal)
+        return res.status(201).json(savedGoal);
+    } catch (error) {
+        return res.status(404).json({ message: error.message });
+    }
+});
+
+
+app.get("/api/goal",[appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const userEmail = req.header['x-user-email'];
+
+    console.log('userId', userId);
+    console.log('userEmail', userEmail)
+    
+    const data = await Goal.find({
+        userId
+    }); 
+        return res.status(200).json({
         data
     });
 });
