@@ -28,6 +28,14 @@ const ActivitySchema = new mongoose.Schema({
     description : {
         type: String,
         required: false
+    },
+    userId : {
+        type: String,
+        required: true
+    },
+    userEmail : {
+        type: String,
+        required: true
     }
 });
 
