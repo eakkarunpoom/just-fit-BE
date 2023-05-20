@@ -129,4 +129,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-firebase-secret-config.json
+justfit-secret-config.json
