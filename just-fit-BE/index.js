@@ -13,6 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const { Activity } = require("./models/Activitity");
 const { Goal } = require("./models/Goal");
+const { User } = require("./models/User")
 
 firebaseAdmin.initializeApp({
     credential: firebaseAdmin.cert(firebaseSecretConfig)
@@ -20,7 +21,7 @@ firebaseAdmin.initializeApp({
 
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT");
+    res.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE");
     res.setHeader("Access-Control-Allow-Headers", "*");
     next();
 })
@@ -142,7 +143,6 @@ app.delete('/api/activity/:id',[appCheckVerification], async (req, res) => {
                 energyBurn: energyBurn,
                 distance: distance,
                 description: description,
-                userEmail: userEmail
             },
             { new: true }
         );
@@ -173,7 +173,6 @@ app.post('/api/goal',[appCheckVerification], async (req, res) => {
             duration: duration,
             distance: distance,
             status: status,
-            userId: userId,
         });
         const savedGoal = await newGoal.save();
         console.log('savedGoal: ', savedGoal)
@@ -197,14 +196,118 @@ app.get("/api/goal",[appCheckVerification], async (req, res) => {
     });
 });
 
+app.put("/api/goal/:id",[appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const goalId = req.params.id;
+    
+    const { status } = req.body;
+    try {
+        const updateStatus = await Goal.findOneAndUpdate(
+            { _id: goalId, userId: userId },
+            {
+                status: status
+            },
+            { new: true }
+        );
+
+        if (!updateStatus) {
+            return res.status(404).json({ message: 'Activity not found' });
+        }
+
+        return res.status(200).json(updateStatus);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+})
+
+app.delete("/api/goal/:id", [appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    const goalId = req.params.id;
+
+    console.log('userId', userId);
+    
+    const { activityType, deadline, duration, energyBurn, distance, status } = req.body;
+    try {
+        const deleteGoal = await Goal.findOneAndDelete(
+            { _id: goalId, userId: userId },
+            {
+                userId : userId,
+                activityType: activityType,
+                deadline: deadline,
+                energyBurn: energyBurn,
+                duration: duration,
+                distance: distance,
+                status: status,
+            },
+            { new: true }
+        );
+
+        if (!deleteGoal) {
+            return res.status(404).json({ message: 'Goal not found' });
+        }
+
+        console.log('deleteGoal: ', deleteGoal);
+        return res.status(200).json(deleteGoal);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+})
+
+app.get("/api/user", [appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']
+
+    const data = await User.find({
+        userId
+    });
+    return res.status(200).json({
+        data
+    })
+});
+
+app.post("/api/user", [appCheckVerification], async (req, res) => {
+    const userId = req.header['x-user-id']; 
+    console.log('userId', userId);
+    
+    const { name, gender, age, height, weight } = req.body;
+    try {
+        const obj = {
+            userId : userId,
+            name: name,
+            gender: gender,
+            age: age,
+            height: height,
+            weight: weight,
+        }
+        // const newUser = new User({
+        //     userId : userId,
+        //     name: name,
+        //     gender: gender,
+        //     age: age,
+        //     height: height,
+        //     weight: weight,
+        // });
+        // const savedUser = await newUser.save();
+
+        // await newUser.update({userId: userId}, obj, {upsert: true, setDefaultsOnInsert: true});
+        const savedUser = await User.findOneAndUpdate(
+            { userId: userId },
+            obj,
+            { new: true, upsert: true }
+        );
+
+        console.log('savedUser: ', savedUser)
+        return res.status(201).json(savedUser);
+    } catch (error) {
+        return res.status(404).json({ message: error.message });
+    }
+})
+
 
 // Express and MongoDB Connection.
 const start = async () => {
     try {
         const { DB_HOST, DB_USERNAME, DB_PASSWORD } = process.env
-        await mongoose.connect(`mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/?retryWrites=true&w=majority/`, {
-            dbName: DB_NAME
-        })
+        await mongoose.connect(`mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/?retryWrites=true&w=majority`)
         const port = process.env.PORT || 8080;
         app.listen(port, () => {
             console.log(`Server is running on port ${port}.`);
