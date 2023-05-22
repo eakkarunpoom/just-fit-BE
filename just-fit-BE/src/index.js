@@ -8,6 +8,9 @@ const firebaseSecretConfig = require('../justfit-secret-config.json');
 const authenticator = require("../middlewares/authMiddleware");
 const activityRouter = require("../routes/activityRoutes");
 const goalRouter = require("../routes/goalRoutes");
+const userRouter = require("../routes/userRoutes");
+const statsRouter = require("../routes/statsRoutes");
+const authRouter = require("../routes/authRoutes");
 
 require('dotenv').config()
 
@@ -27,18 +30,19 @@ app.use((req, res, next) => {
     next();
 })
 
+app.use(authRouter);
+app.use(authenticator, userRouter);
 app.use(authenticator, activityRouter);
 app.use(authenticator, goalRouter);
+app.use(authenticator, statsRouter);
 
-
-const hostname = "127.0.0.1"
 
 // Express and MongoDB initial.
 const start = async () => {
     try {
         const { DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME } = process.env
         const port = process.env.PORT || 8080;
-        app.listen(port, hostname, async () => {
+        app.listen(port, async () => {
             console.log(`Server is running on port ${port}.`);
             await mongoose.connect(`mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/?retryWrites=true&w=majority`, {
                 dbName: DB_NAME
